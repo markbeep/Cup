@@ -1,0 +1,3 @@
+[submodule "Disco-C"]
+	path = external/Disco-C
+	url = git@github.com:markbeep/Disco-C.git
