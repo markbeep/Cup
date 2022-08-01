@@ -20,4 +20,4 @@ RUN rm -f main && make
 
 EXPOSE 443
 
-CMD gdb -ex "set print thread-events off" -ex run -q main
+CMD gdb -ex "set print thread-events off" -ex run -ex bt -q main
