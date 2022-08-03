@@ -14,9 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <utils/disco_logging.h>
-#include <utils/env_parse.h>
 
-char *BOT_TOKEN; // will be assigned in the main function
+char *bot_token; // will be assigned in the main function
 
 static int count = 0; // keeps track of what the last sent count is
 static uint64_t bot_to_watch = 0UL;
@@ -135,14 +134,14 @@ int main(int argc, char **argv) {
     d_set_log_level(D_LOG_ERR | D_LOG_NOTICE);
 
     // gets the token from the .env file
-    BOT_TOKEN = d_getenv(".env", "TOKEN");
-    if (!BOT_TOKEN) {
+    bot_token = getenv("DISCORD_TOKEN");
+    if (!bot_token) {
         printf("No bot token found\n");
         exit(1);
     }
 
     // starts the bot. This function blocks
-    discord_start_bot(&callbacks, BOT_TOKEN, &conf);
-    free(BOT_TOKEN);
+    discord_start_bot(&callbacks, bot_token, &conf);
+    free(bot_token);
     return 0;
 }

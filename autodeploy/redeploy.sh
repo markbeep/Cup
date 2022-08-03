@@ -1,18 +1,14 @@
 #!/bin/sh
 
-# first pull new changes
-git pull
-git submodule update --recursive --remote
-
-# build new image
-docker build -t cup .
+# pull new image
+docker pull markbeep/cup:latest
 
 # stop old container
 docker stop cup || true
 docker rm cup || true
 
 # run new build
-docker run -d --restart unless-stopped --name cup cup
+docker run -d --env-file .env --restart unless-stopped -v data:/app/data --name cup markbeep/cup
 
-# removes the old image
+# removes the old unused image
 docker image prune -f
