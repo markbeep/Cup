@@ -28,11 +28,8 @@ jobs:
       with:
         context: ./
         file: ./Dockerfile
-        builder: ${{ steps.buildx.outputs.name }}
         push: true
         tags: ${{ secrets.DOCKER_HUB_USERNAME }}/cup:latest
-        cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/cup:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}
 
     - name: Webhook
       uses: joelwmale/webhook-action@master
