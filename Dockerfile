@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y && \
-    apt-get install make cmake gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
+    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
 
 # build Disco-C
 COPY external/Disco-C/src external/Disco-C/src
@@ -18,6 +18,8 @@ COPY src src
 WORKDIR src
 RUN rm -f main && make
 
+# fixes CURL from not accepting the certificate
+RUN export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 EXPOSE 443
 
 CMD gdb -ex "set print thread-events off" -ex run -ex bt -q main
