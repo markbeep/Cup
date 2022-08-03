@@ -37,8 +37,8 @@ jobs:
         platforms: linux/amd64,linux/arm/v7
         push: true
         tags: ${{ secrets.DOCKER_HUB_USERNAME }}/cup:latest
-        cache-from: type=registry,ref=user/app:buildcache
-        cache-to: type=registry,ref=user/app:buildcache,mode=max
+        cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/cup:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/cup:buildcache,mode=max
 
     - name: Webhook
       uses: joelwmale/webhook-action@master
