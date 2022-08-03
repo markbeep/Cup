@@ -19,7 +19,7 @@ WORKDIR src
 RUN rm -f main && make
 
 # fixes CURL from not accepting the certificate
-RUN export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
 EXPOSE 443
 
 CMD gdb -ex "set print thread-events off" -ex run -ex bt -q main
