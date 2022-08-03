@@ -5,14 +5,14 @@ git pull
 git submodule update --recursive --remote
 
 # build new image
-sudo docker build -t cup .
+docker build -t cup .
 
 # stop old container
-sudo docker stop cup || true
-sudo docker rm cup || true
+docker stop cup || true
+docker rm cup || true
 
 # run new build
-sudo docker run -d --restart unless-stopped --name cup cup
+docker run -d --restart unless-stopped --name cup cup
 
 # removes the old image
-sudo docker image prune -f
+docker image prune -f
