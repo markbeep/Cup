@@ -1,12 +1,10 @@
-FROM arm32v7/alpine:3.16.1
+FROM ubuntu:focal
 
 WORKDIR /app
 
-RUN apk add --no-cache make gcc musl-dev curl-dev libwebsockets-dev gdb
-
-# downloads <sys/queue.h>
-RUN wget https://raw.githubusercontent.com/openembedded/openembedded-core/master/meta/recipes-core/musl/bsd-headers/sys-queue.h -O queue.h &&\
-    mv queue.h /usr/include/sys/queue.h
+RUN apt-get update && \
+    apt-get install -y && \
+    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
 
 # build Disco-C
 COPY external/Disco-C/src external/Disco-C/src
