@@ -12,7 +12,7 @@ CFLAGS	= -std=gnu11 -g -pedantic -Wall -Wno-conversion \
     -O0 \
     -fno-omit-frame-pointer -ffloat-store -fno-common -fstrict-aliasing \
     -lm
-INCLUDE = -I../external/Disco-C/include -I../external/Disco-C/external -I/usr/local/include -I/usr/include
+INCLUDE = -I../external/Disco-C/include -I../external/Disco-C/external -I/usr/include
 
 main: main.c
 	$(CC) $(INCLUDE) $(CFLAGS) main.c -o $@ $(LIBSPATH) $(LIBS)
