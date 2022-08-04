@@ -74,7 +74,9 @@ void on_ready(bot_client_t *bot) {
     printf("User ID:\t%ju\n", bot->user->id);
     printf("====================================\n\n");
     fflush(stdout);
-    discord_channel_send_message(bot, "Bot started up", on_ready_channel_id, NULL, false);
+    char str[50];
+    sprintf(str, "<@%ju>: Bot started up", owner_id);
+    discord_channel_send_message(bot, str, on_ready_channel_id, NULL, false);
 
     // checks what the last count is and sends the next count if needed
     bot_to_watch = get_watch_id();
