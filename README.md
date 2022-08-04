@@ -2,7 +2,7 @@
 2. Build manually (optional): `docker build -t markbeep/cup .`
 3. Create volume: `docker volume create data`
 3. Run container: `docker run -d --env-file ~/Cup/.env --restart unless-stopped -v data:/app/data --name cup markbeep/cup`
-3. Run bash in container: `docker run -it --env-file ~/Cup/.env --entrypoint /bin/sh -v data:/app/data --name cup markbeep/cup`
+3. Run bash in container: `docker run -it --env-file .env --entrypoint /bin/sh -v data:/app/data --name cup markbeep/cup`
 
 .env file contains `DISCORD_TOKEN=...` with the Discord bot token.
 

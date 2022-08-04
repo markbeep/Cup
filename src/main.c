@@ -20,23 +20,51 @@ char *bot_token; // will be assigned in the main function
 static int count = 0; // keeps track of what the last sent count is
 static uint64_t bot_to_watch = 0UL;
 static uint64_t count_channel_id = 996746797236105236UL;
+static uint64_t on_ready_channel_id = 1004090600934617238UL;
 static uint64_t owner_id = 205704051856244736UL;
+
+static uint64_t get_watch_id(void) {
+    FILE *fp = fopen("../data/watch.txt", "r");
+    if (!fp)
+        return 0;
+    uint64_t id = -1;
+    fscanf(fp, "%ju", &id);
+    fclose(fp);
+    return id;
+}
+
+static void set_watch_id(uint64_t id) {
+    FILE *fp = fopen("../data/watch.txt", "w");
+    char str[22];
+    sprintf(str, "%ju", id);
+    fwrite(str, 1, strnlen(str, 22), fp);
+    fclose(fp);
+}
+
+static void send_count(bot_client_t *bot, int n) {
+    char s[20];
+    sprintf(s, "%d", n);
+    discord_channel_send_message(bot, s, count_channel_id, NULL, false);
+}
 
 /**
  * @brief Gets the last sent integer in the channel.
  *
  * @param bot
- * @return int
  */
-static int get_last_message_count(bot_client_t *bot) {
+static bool get_last_message_count(bot_client_t *bot) {
     struct discord_message **arr;
     int arr_size = discord_get_messages(bot, count_channel_id, &arr, 1, 0, 0, 0);
     int res = -1;
-    if (arr_size > 0 && arr[0]) {
+    bool send_count = false;
+    if (arr_size > 0 && arr[0] && arr[0]->content) {
         res = (int)strtol(arr[0]->content, NULL, 10);
+        if (arr[0]->user->id == bot_to_watch)
+            send_count = true;
         free(arr);
     }
-    return res;
+    count = res;
+    return send_count;
 }
 
 void on_ready(bot_client_t *bot) {
@@ -46,9 +74,12 @@ void on_ready(bot_client_t *bot) {
     printf("User ID:\t%ju\n", bot->user->id);
     printf("====================================\n\n");
     fflush(stdout);
+    discord_channel_send_message(bot, "Bot started up", on_ready_channel_id, NULL, false);
 
-    // checks what the last count is
-    count = get_last_message_count(bot);
+    // checks what the last count is and sends the next count if needed
+    bot_to_watch = get_watch_id();
+    if (get_last_message_count(bot))
+        send_count(bot, count + 1);
 }
 
 static void cmd_count(bot_client_t *bot, struct discord_message *message) {
@@ -74,6 +105,7 @@ static void cmd_watch(bot_client_t *bot, struct discord_message *message) {
     token = strtok_r(rest, " ", &rest);
     if (token) {
         bot_to_watch = (uint64_t)strtoull(token, NULL, 10);
+        set_watch_id(bot_to_watch);
     }
     if (bot_to_watch == 0) {
         sprintf(s, "Watch = nobody <:sadge:851469686578741298>");
@@ -81,12 +113,6 @@ static void cmd_watch(bot_client_t *bot, struct discord_message *message) {
         sprintf(s, "Watch = <@%ju>", bot_to_watch);
     }
     discord_channel_send_message(bot, NULL, message->channel_id, &msg, false);
-}
-
-static void send_count(bot_client_t *bot, int n) {
-    char s[20];
-    sprintf(s, "%d", n);
-    discord_channel_send_message(bot, s, count_channel_id, NULL, false);
 }
 
 void on_message(bot_client_t *bot, struct discord_message *message) {
