@@ -1,4 +1,4 @@
-FROM alpine:3.16.1
+FROM arm32v7/alpine:3.16.1
 
 WORKDIR /app
 
