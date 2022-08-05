@@ -4,10 +4,10 @@
 #include "../commands.h"
 #include <sys/time.h>
 
-static int count = 0;                                    // keeps track of what the last sent count is
-static uint64_t bot_to_watch = 0UL;                      // what bot to send a count after
-static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
-// static uint64_t count_channel_id = 948506487716737034UL; // debugging count channel
+static int count = 0;               // keeps track of what the last sent count is
+static uint64_t bot_to_watch = 0UL; // what bot to send a count after
+// static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
+static uint64_t count_channel_id = 948506487716737034UL; // debugging count channel
 
 // used to count the efficiency of the counting channel
 static struct timeval timer_short, timer_long; // short should be <1 min while long can be >1 min
@@ -53,24 +53,28 @@ static void send_count(bot_client_t *bot, int n) {
     discord_channel_send_message(bot, s, count_channel_id, NULL, false);
 }
 
+static void last_message_cb(bot_client_t *bot, size_t size, struct discord_message **arr, void *data) {
+    (void)data;
+    int res = -1;
+    if (size > 0 && arr[0] && arr[0]->content) {
+        res = (int)strtol(arr[0]->content, NULL, 10);
+        free(arr);
+    }
+    count = res;
+    if (count >= 0)
+        send_count(bot, count + 1);
+}
 /**
  * @brief Gets the last sent integer in the channel.
  *
  * @param bot
  */
-static bool get_last_message_count(bot_client_t *bot) {
-    struct discord_message **arr;
-    int arr_size = discord_get_messages(bot, count_channel_id, &arr, 1, 0, 0, 0);
-    int res = -1;
-    bool send_count = false;
-    if (arr_size > 0 && arr[0] && arr[0]->content) {
-        res = (int)strtol(arr[0]->content, NULL, 10);
-        if (arr[0]->user->id == bot_to_watch)
-            send_count = true;
-        free(arr);
-    }
-    count = res;
-    return send_count;
+static void get_last_message_count(bot_client_t *bot) {
+
+    struct discord_multiple_message_cb *cb = (struct discord_multiple_message_cb *)malloc(sizeof(struct discord_multiple_message_cb));
+    cb->data = NULL;
+    cb->cb = &last_message_cb;
+    discord_get_messages(bot, count_channel_id, 1, 0, 0, 0, cb);
 }
 
 /**
@@ -136,14 +140,13 @@ static void cmd_watch(bot_client_t *bot, struct discord_message *message) {
     } else {
         sprintf(s, "Watch = <@%ju>", bot_to_watch);
     }
-    discord_channel_send_message(bot, NULL, message->channel_id, &msg, false);
+    discord_channel_send_message(bot, NULL, message->channel_id, &msg, NULL);
 }
 
 void count_on_ready(bot_client_t *bot) {
     // checks what the last count is and sends the next count if needed
     bot_to_watch = get_watch_id();
-    if (get_last_message_count(bot))
-        send_count(bot, count + 1);
+    get_last_message_count(bot);
     // sets the timer to now
     gettimeofday(&timer_short, NULL);
     gettimeofday(&timer_long, NULL);
