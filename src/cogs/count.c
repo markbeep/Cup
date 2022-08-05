@@ -4,10 +4,10 @@
 #include "../commands.h"
 #include <sys/time.h>
 
-static int count = 0;               // keeps track of what the last sent count is
-static uint64_t bot_to_watch = 0UL; // what bot to send a count after
-// static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
-static uint64_t count_channel_id = 948506487716737034UL; // channel to count in
+static int count = 0;                                    // keeps track of what the last sent count is
+static uint64_t bot_to_watch = 0UL;                      // what bot to send a count after
+static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
+// static uint64_t count_channel_id = 948506487716737034UL; // debugging count channel
 
 // used to count the efficiency of the counting channel
 static struct timeval timer_short, timer_long; // short should be <1 min while long can be >1 min
