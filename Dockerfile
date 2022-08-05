@@ -7,10 +7,10 @@ RUN apt-get update && \
     apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
 
 # build Disco-C
-COPY external/Disco-C/src external/Disco-C/src
-COPY external/Disco-C/include external/Disco-C/include
 COPY external/Disco-C/external external/Disco-C/external
 COPY external/Disco-C/Makefile external/Disco-C/Makefile
+COPY external/Disco-C/include external/Disco-C/include
+COPY external/Disco-C/src external/Disco-C/src
 RUN (cd external/Disco-C && make clean && make dev)
 
 # build bot

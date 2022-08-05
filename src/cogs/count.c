@@ -2,10 +2,16 @@
 #define CUP_COUNT
 
 #include "../commands.h"
+#include <sys/time.h>
 
-static int count = 0;                                    // keeps track of what the last sent count is
-static uint64_t bot_to_watch = 0UL;                      // what bot to send a count after
-static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
+static int count = 0;               // keeps track of what the last sent count is
+static uint64_t bot_to_watch = 0UL; // what bot to send a count after
+// static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
+static uint64_t count_channel_id = 948506487716737034UL; // channel to count in
+
+// used to count the efficiency of the counting channel
+static struct timeval timer_short, timer_long; // short should be <1 min while long can be >1 min
+static int counts_sent_short = 0, counts_sent_long = 0;
 
 /**
  * @brief Get the watch id from the watch file
@@ -67,13 +73,46 @@ static bool get_last_message_count(bot_client_t *bot) {
     return send_count;
 }
 
+/**
+ * @brief Returns the amount of s passed since the timer.
+ *
+ * @param timer
+ * @return float
+ */
+static float get_time_passed(struct timeval timer) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return now.tv_sec - timer.tv_sec + (now.tv_usec - timer.tv_usec) / 1000000.0f;
+}
+
 static void cmd_count(bot_client_t *bot, struct discord_message *message) {
-    struct discord_embed embed = {0};
+    // calculate the efficiency
+    float s_pass = get_time_passed(timer_long);
+    if (s_pass <= 0.f)
+        s_pass = 0.0001;
+    float eff = counts_sent_long / s_pass;
+
+    char s1[20];
+    sprintf(s1, "`%d`", count);
+    struct discord_embed_field f1 = {
+        .name = "Count",
+        .value = s1,
+        ._inline = true,
+    };
+    char s2[50];
+    sprintf(s2, "`%.2f` msgs/sec (%.0fs)", eff, s_pass);
+    struct discord_embed_field f2 = {
+        .name = "Efficiency",
+        .value = s2,
+        ._inline = true,
+    };
+    struct discord_embed_field *fs1[] = {&f1, &f2};
+    struct discord_embed embed = {
+        .color = 0xadd8e6,
+        .fields = fs1,
+        .fields_count = 2,
+    };
     struct discord_create_message msg = {.embed = &embed};
-    embed.color = 0xadd8e6;
-    char s[40];
-    embed.description = s;
-    sprintf(s, "Count = `%d`", count);
     discord_channel_send_message(bot, NULL, message->channel_id, &msg, false);
 }
 
@@ -105,6 +144,9 @@ void count_on_ready(bot_client_t *bot) {
     bot_to_watch = get_watch_id();
     if (get_last_message_count(bot))
         send_count(bot, count + 1);
+    // sets the timer to now
+    gettimeofday(&timer_short, NULL);
+    gettimeofday(&timer_long, NULL);
 }
 
 void count_on_message(bot_client_t *bot, struct discord_message *message) {
@@ -122,14 +164,28 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
         return;
     }
 
-    // if it's not the bot I'm watching (nor the owner) or not the count channel
-    if ((message->user->id != owner_id && message->user->id != bot_to_watch) ||
-        message->channel_id != count_channel_id)
+    // if it's not the count channel
+    if (message->channel_id != count_channel_id)
+        return;
+
+    counts_sent_short++;
+    counts_sent_long++;
+
+    // if it's not the bot I'm watching nor the owner
+    if (message->user->id != owner_id && message->user->id != bot_to_watch)
         return;
     int n = (int)strtol(message->content, NULL, 10);
     if (n >= count) { // ignore any number below our count
         count = n;
         send_count(bot, n + 1);
+    }
+
+    // update efficiency if short timer is above 60s
+    if (get_time_passed(timer_short) > 45.0f) {
+        timer_long = timer_short;
+        counts_sent_long = counts_sent_short;
+        counts_sent_short = 0;
+        gettimeofday(&timer_short, NULL);
     }
 }
 
