@@ -8,3 +8,4 @@
 .env
 !Dockerfile
 !Makefile
+.vscode
