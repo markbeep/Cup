@@ -25,21 +25,21 @@ void on_ready(bot_client_t *bot) {
     fflush(stdout);
 
     // sends a message to a channel when the bot started up
-    char str[50], dt[50];
+    char str[30], dt[50];
     _d_datetime(dt); // gets the current datetime as a string
-    sprintf(str, "<@%ju>: Bot started up", owner_id);
+    sprintf(str, "<@%ju>", owner_id);
     struct discord_embed_footer footer = {
         .text = dt,
     };
     struct discord_embed embed = {
         .color = 0xadd8e6,
         .footer = &footer,
-        .description = str,
+        .description = "Bot started up!",
     };
     struct discord_create_message message = {
         .embed = &embed,
     };
-    discord_channel_send_message(bot, NULL, on_ready_channel_id, &message, false);
+    discord_channel_send_message(bot, str, on_ready_channel_id, &message, NULL);
 
     // calls the on_ready function inside the count.c file
     count_on_ready(bot);
