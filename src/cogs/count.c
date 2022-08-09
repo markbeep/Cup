@@ -47,15 +47,15 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
 
     // commands to call (bots are ignored)
     if (!message->user->bot) {
-        if (strncmp(message->content, "!count", 6) == 0) {
+        if (strncmp(message->content, "-count", 6) == 0) {
             cmd_count(bot, message);
             return;
         }
-        if (message->user->id == owner_id && strncmp(message->content, "!watch", 6) == 0) {
+        if (message->user->id == owner_id && strncmp(message->content, "-watch", 6) == 0) {
             cmd_watch(bot, message);
             return;
         }
-        if (strncmp(message->content, "!ping", 5) == 0) {
+        if (strncmp(message->content, "-ping", 5) == 0) {
             cmd_ping(bot, message);
             return;
         }
