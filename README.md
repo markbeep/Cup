@@ -1,4 +1,4 @@
-1. `git clone --recurse-submodules git@github.com:markbeep/Cup.git`
+1. Clone repo with submodules: `git clone --recurse-submodules git@github.com:markbeep/Cup.git`
 2. Build manually (optional): `docker build -t markbeep/cup .`
 3. Create volume: `docker volume create data`
 3. Run container: `docker run -d --env-file .env --restart unless-stopped -v data:/app/data --name cup markbeep/cup`
