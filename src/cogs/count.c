@@ -8,9 +8,6 @@ static int count = 0;                                    // keeps track of what 
 static uint64_t bot_to_watch = 0UL;                      // what bot to send a count after
 static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
 // static uint64_t count_channel_id = 948506487716737034UL; // debugging count channel
-static long total_ping = 0;
-static int total_pings_taken = 0;
-static int messages_until_measure = 0; // How many messages until the ping should be measured
 
 // used to count the efficiency of the counting channel
 static struct timeval timer_short, timer_long; // short should be <1 min while long can be >1 min
@@ -19,13 +16,11 @@ static int counts_sent_short = 0, counts_sent_long = 0;
 // COMMANDS
 static void cmd_watch(bot_client_t *bot, struct discord_message *message);
 static void cmd_count(bot_client_t *bot, struct discord_message *message);
-static void cmd_ping(bot_client_t *bot, struct discord_message *message);
 // CALLBACKS
-static void store_ping_callback(bot_client_t *bot, struct discord_message *msg, void *w);
-static void pong_callback(bot_client_t *bot, struct discord_message *msg, void *data);
 static void last_message_cb(bot_client_t *bot, size_t size, struct discord_message **arr, void *data);
+extern void store_ping_callback(bot_client_t *bot, struct discord_message *msg, void *w);
 // HELPERS
-static float get_time_passed(struct timeval timer);
+float get_time_passed(struct timeval timer);
 static uint64_t get_watch_id(void);
 static void set_watch_id(uint64_t id);
 static void send_count(bot_client_t *bot, int n);
@@ -53,10 +48,6 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
         }
         if (message->user->id == owner_id && strncmp(message->content, "-watch", 6) == 0) {
             cmd_watch(bot, message);
-            return;
-        }
-        if (strncmp(message->content, "-ping", 5) == 0) {
-            cmd_ping(bot, message);
             return;
         }
     }
@@ -98,7 +89,7 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
  * @param timer
  * @return float
  */
-static float get_time_passed(struct timeval timer) {
+float get_time_passed(struct timeval timer) {
     struct timeval now;
     gettimeofday(&now, NULL);
     return (now.tv_sec - timer.tv_sec) * 1000.0f + (now.tv_usec - timer.tv_usec) / 1000.0f;
@@ -158,76 +149,11 @@ static void cmd_watch(bot_client_t *bot, struct discord_message *message) {
     discord_channel_send_message(bot, NULL, message->channel_id, &msg, NULL);
 }
 
-static void cmd_ping(bot_client_t *bot, struct discord_message *message) {
-    struct timeval *start = malloc(sizeof(struct timeval));
-    gettimeofday(start, NULL);
-
-    // creates the embed
-    struct discord_embed embed = {
-        .description = "Pinging...",
-        .color = 0x8000,
-    };
-    struct discord_create_message send_message = {
-        .embed = &embed,
-    };
-
-    // creates the callback, because we want to receive the message
-    struct discord_message_cb *cb = (struct discord_message_cb *)malloc(sizeof(struct discord_message_cb));
-    cb->cb = &pong_callback;
-    cb->data = start;
-    discord_channel_send_message(bot, NULL, message->channel_id, &send_message, cb);
-}
-
 /* #####################################
 
     CALLBACKS
 
    ##################################### */
-
-static void pong_callback(bot_client_t *bot, struct discord_message *msg, void *data) {
-    // gets the time passed
-    struct timeval stop, *start = (struct timeval *)data;
-    gettimeofday(&stop, NULL);
-    char time_passed[120];
-    long delta = (stop.tv_sec - start->tv_sec) * 1000 + (stop.tv_usec - start->tv_usec) / 1000;
-    long avg_ping = total_pings_taken > 0 ? total_ping / total_pings_taken : 0;
-    sprintf(time_passed,
-            "Ping: %ld ms\nHeartbeat: %ld ms\nAvg Ping: %ldms (n = %d)",
-            delta,
-            bot->heartbeat_latency,
-            avg_ping,
-            total_pings_taken);
-
-    struct discord_embed embed = {
-        .description = time_passed,
-        .color = 0x8000,
-    };
-    struct discord_create_message send_message = {
-        .embed = &embed,
-    };
-    // edits the message right after the message has been sent to check the latency
-    discord_channel_edit_message(bot, NULL, msg->channel_id, msg->id, &send_message);
-    // don't forget to destroy the received message in the end to avoid memory leaks
-    discord_destroy_message(msg);
-}
-
-static void store_ping_callback(bot_client_t *bot, struct discord_message *msg, void *w) {
-    (void)bot;
-    struct timeval t0 = *((struct timeval *)w);
-    if (messages_until_measure <= 0) {
-        long ping = get_time_passed(t0);
-        if (ping < 1000) { // ignore outliers above 1s
-            total_ping += ping;
-            total_pings_taken++;
-            messages_until_measure = 100;
-        }
-    } else {
-        messages_until_measure--;
-    }
-
-    free(w);
-    discord_destroy_message(msg);
-}
 
 static void last_message_cb(bot_client_t *bot, size_t size, struct discord_message **arr, void *data) {
     (void)data;

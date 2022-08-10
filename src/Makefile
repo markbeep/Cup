@@ -15,4 +15,4 @@ CFLAGS	= -std=gnu11 -g -pedantic -Wall -Wno-conversion \
 INCLUDE = -I../external/Disco-C/include -I../external/Disco-C/external -I/usr/include
 
 main: main.c
-	$(CC) $(INCLUDE) $(CFLAGS) main.c cogs/count.c -o $@ $(LIBSPATH) $(LIBS)
+	$(CC) $(INCLUDE) $(CFLAGS) main.c cogs/count.c cogs/ping.c -o $@ $(LIBSPATH) $(LIBS)

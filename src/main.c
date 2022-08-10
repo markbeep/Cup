@@ -15,6 +15,9 @@
 #include <utils/disco_logging.h>
 
 static uint64_t on_ready_channel_id = 1004090600934617238UL; // channel to announce when the bot starts up
+extern void count_on_ready(bot_client_t *bot);
+extern void count_on_message(bot_client_t *bot, struct discord_message *message);
+extern void ping_on_message(bot_client_t *bot, struct discord_message *msg);
 
 void on_ready(bot_client_t *bot) {
     printf("====================================\n");
@@ -47,6 +50,7 @@ void on_ready(bot_client_t *bot) {
 
 void on_message(bot_client_t *bot, struct discord_message *message) {
     count_on_message(bot, message);
+    ping_on_message(bot, message);
     discord_destroy_message(message);
 }
 
