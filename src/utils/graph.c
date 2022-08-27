@@ -1,6 +1,7 @@
 #include <cairo/cairo.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct {
     int w;
@@ -11,11 +12,30 @@ typedef struct {
     double y_max;
     double margin;
     bool display_as_int;
+    double x_offset; // offsets the labels on the axis by a given amount
+    double y_offset;
     int x_ticks;
     int y_ticks;
 } graph_scale_t;
 
-static void draw_grid_axis(cairo_t *cr, graph_scale_t gs) {
+static void draw_text_centered(cairo_surface_t *surface, graph_scale_t gs, double x, double y, char *text, double font_size, double rotation) {
+    cairo_t *cr = cairo_create(surface);
+    cairo_text_extents_t extends = {0};
+    cairo_set_source_rgba(cr, 1, 1, 1, 1);
+    cairo_set_line_width(cr, 1.5);
+    cairo_set_font_size(cr, font_size);
+    cairo_text_extents(cr, text, &extends);
+    cairo_translate(cr, x, y);
+    cairo_rotate(cr, rotation);
+    cairo_translate(cr, -x, -y);
+    cairo_move_to(cr, x - extends.width / 2, y + extends.height / 2);
+    cairo_text_path(cr, text);
+    cairo_fill(cr);
+}
+
+static void draw_grid_axis(cairo_surface_t *surface, graph_scale_t gs) {
+    cairo_t *cr = cairo_create(surface);
+
     // AXIS
     cairo_set_line_width(cr, 3);
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
@@ -27,40 +47,53 @@ static void draw_grid_axis(cairo_t *cr, graph_scale_t gs) {
     // LINE TICKS
     double x_spacing = (gs.x_ticks > 0) ? (gs.w - 2 * gs.margin) / gs.x_ticks : 0.0;
     double y_spacing = (gs.y_ticks > 0) ? (gs.h - 2 * gs.margin) / gs.y_ticks : 0.0;
+    double x_diff = gs.x_max - gs.x_min;
+    double x_val_spac = (gs.x_ticks > 0) ? x_diff / gs.x_ticks : 0.0;
+    double y_diff = gs.y_max - gs.y_min;
+    double y_val_spac = (gs.y_ticks > 0) ? y_diff / gs.y_ticks : 0.0;
     cairo_set_source_rgba(cr, 1, 1, 1, 0.6);
     cairo_set_line_width(cr, 0.5);
+
     // x axis ticks
+    char text[20];
     for (int i = 0; i <= gs.x_ticks; i++) {
         cairo_move_to(cr, x_spacing * i + gs.margin, gs.h - gs.margin);
         cairo_line_to(cr, x_spacing * i + gs.margin, gs.margin);
+        // X AXIS NUMBERING
+        if (gs.display_as_int)
+            sprintf(text, "%d", (int)(i * x_val_spac + gs.x_offset));
+        else
+            sprintf(text, "%.2f", i * x_val_spac + gs.x_offset);
+        draw_text_centered(surface, gs, x_spacing * i + gs.margin, gs.h - gs.margin + 15, text, 15, 0);
     }
     // y axis ticks
     for (int i = 0; i <= gs.y_ticks; i++) {
         cairo_move_to(cr, gs.margin, y_spacing * i + gs.margin);
         cairo_line_to(cr, gs.w - gs.margin, y_spacing * i + gs.margin);
+        // Y AXIS NUMBERING
+        if (gs.display_as_int)
+            sprintf(text, "%d", (int)(gs.y_max - i * y_val_spac + gs.y_offset));
+        else
+            sprintf(text, "%.2f", gs.y_max - i * y_val_spac + gs.y_offset);
+        draw_text_centered(surface, gs, gs.margin - 15, y_spacing * i + gs.margin, text, 15, 0);
     }
     cairo_stroke(cr);
-
-    // NUMBERING
-    char t[20];
-    if (gs.display_as_int)
-        sprintf(t, "%d", (int)gs.x_max);
-    else
-        sprintf(t, "%.2f", gs.x_max);
-    cairo_set_source_rgba(cr, 1, 1, 1, 1);
-    cairo_set_line_width(cr, 1.5);
-    cairo_move_to(cr, gs.w - 2 * gs.margin, gs.h - gs.margin / 3);
-    cairo_text_path(cr, t);
-    cairo_fill(cr);
 }
 
 static void graph_coords(graph_scale_t gs, double x, double y, double *x_src, double *y_src) {
-    *x_src = x * (gs.w - 2 * gs.margin) / (gs.x_max - gs.x_min) + gs.margin;
-    *y_src = gs.h - y * (gs.h - 2 * gs.margin) / (gs.y_max - gs.y_min) - gs.margin;
+    double x_abs = gs.x_max - gs.x_min;
+    if (x_abs < 0)
+        x_abs *= -1;
+    double y_abs = gs.y_max - gs.y_min;
+    if (y_abs < 0)
+        y_abs *= -1;
+    *x_src = x * (gs.w - 2 * gs.margin) / (x_abs) + gs.margin;
+    *y_src = gs.h - y * (gs.h - 2 * gs.margin) / (y_abs)-gs.margin;
 }
 
 static void draw_point(cairo_t *cr, double x, double y) {
-    cairo_set_source_rgba(cr, 1, 0, 0, 1);
+    float rgb[3] = {255, 255, 255};
+    cairo_set_source_rgba(cr, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1);
     cairo_set_line_width(cr, 5);
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_move_to(cr, x, y);
@@ -87,7 +120,8 @@ static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double *
     cairo_t *cr = cairo_create(surface);
     cairo_t *cr_2 = cairo_create(surface);
     cairo_set_line_width(cr_2, 2);
-    cairo_set_source_rgba(cr_2, 1, 0, 0, 1);
+    float rgb[3] = {242, 243, 174};
+    cairo_set_source_rgba(cr_2, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1);
     double x, y;
     for (size_t i = 0; i < n; i++) {
         graph_coords(gs, points[i][0], points[i][1], &x, &y);
@@ -100,39 +134,59 @@ static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double *
     cairo_stroke(cr_2);
 }
 
-void draw_efficiency_graph(char *fp, double **points, size_t n) {
+void draw_efficiency_graph(char *fp, double **points, size_t n, char *title, char *x_label, char *y_label) {
     graph_scale_t gs = {
-        .w = 500,
-        .h = 250,
-        .x_max = 100.0,
+        .w = 1000,
+        .h = 500,
+        .x_max = (double)n,
         .x_min = 0.0,
         .y_max = 10.0,
         .y_min = 0.0,
-        .margin = 20,
+        .margin = 60,
         .display_as_int = true,
-        .x_ticks = 15,
+        .x_ticks = 10,
         .y_ticks = 10,
+        .x_offset = -(double)n,
+        .y_offset = 0,
     };
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, gs.w, gs.h);
     cairo_t *cr = cairo_create(surface);
 
     // background
-    float bg_rgb[3] = {48, 52, 63};
     cairo_rectangle(cr, 0, 0, gs.w, gs.h);
+    float bg_rgb[3] = {48, 52, 63};
     cairo_set_source_rgba(cr, bg_rgb[0] / 255, bg_rgb[1] / 255, bg_rgb[2] / 255, 1);
     cairo_fill(cr);
 
     // axis
-    draw_grid_axis(cr, gs);
+    draw_grid_axis(surface, gs);
 
     // draw points
     draw_line_graph(surface, gs, points, n);
+
+    // draw labels
+    // TITLE
+    draw_text_centered(surface, gs, gs.w / 2, gs.margin / 2, title, 25, 0);
+    draw_text_centered(surface, gs, gs.margin / 2 - 10, gs.h / 2, y_label, 15, 3 * 3.14159 / 2);
+    draw_text_centered(surface, gs, gs.w / 2, gs.h - gs.margin / 2 + 10, x_label, 15, 0);
 
     // save to file
     cairo_surface_write_to_png(surface, fp);
 }
 
 int main_c(void) {
-    draw_efficiency_graph("test.png", NULL, 0);
+    size_t size = 15;
+    double **points = malloc(sizeof(double) * size);
+
+    for (int i = 0; i < size; i++) {
+        points[i] = malloc(sizeof(double) * 2);
+        points[i][0] = i;
+        points[i][1] = ((i * i * i) % 100) / 10.;
+    }
+    draw_efficiency_graph("test.png", points, size, "Count Efficiency", "minutes", "msgs / sec");
+
+    for (int i = 0; i < size; i++)
+        free(points[i]);
+    free(points);
     return 0;
 }

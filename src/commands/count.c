@@ -34,6 +34,8 @@ void count_on_ready(bot_client_t *bot) {
     bot_to_watch = get_watch_id();
     get_last_message_count(bot);
 
+    for (size_t i = 0; i < eff_array_size; i++)
+        eff_points[i] = 0;
     // calling the background task starts it
     if (!background_task_started) {
         background_task_started = true;
@@ -249,7 +251,8 @@ static void background_task(void *w, CURL *handle) {
 
     // add to efficiency array
     double eff = counts_sent_prev / background_task_loop_seconds;
-    eff_points[eff_n++] = eff;
+    eff_n++;
+    eff_points[eff_n % eff_array_size] = eff;
 
     // to start the timer for when the background task should be repeated
     static struct timeval future_timer;
