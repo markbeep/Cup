@@ -1,5 +1,5 @@
 LIBSPATH= -L../external/Disco-C -L/usr/lib -L/usr/local/lib
-LIBS 	= -ldisco -lcurl -lpthread -lwebsockets
+LIBS 	= -ldisco -lcurl -lpthread -lwebsockets -lcairo
 CC 		= gcc
 CFLAGS	= -std=gnu11 -g -pedantic -Wall -Wno-conversion \
     -Wextra -Wno-missing-field-initializers -Wformat=2 \
@@ -15,4 +15,4 @@ CFLAGS	= -std=gnu11 -g -pedantic -Wall -Wno-conversion \
 INCLUDE = -I../external/Disco-C/include -I../external/Disco-C/external -I/usr/include
 
 main: main.c
-	$(CC) $(INCLUDE) $(CFLAGS) main.c cogs/count.c cogs/ping.c -o $@ $(LIBSPATH) $(LIBS)
+	$(CC) $(INCLUDE) $(CFLAGS) main.c commands/count.c commands/ping.c utils/graph.c -o $@ $(LIBSPATH) $(LIBS)

@@ -1,10 +1,12 @@
-FROM ubuntu:focal
+FROM ubuntu:20.04
 
 WORKDIR /app
 
+# fixes the tzdata configuration
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y && \
-    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
+    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb wget libcairo2-dev -y
 
 # build Disco-C
 COPY external/Disco-C/external external/Disco-C/external
