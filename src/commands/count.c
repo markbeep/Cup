@@ -115,7 +115,7 @@ static void cmd_count(bot_client_t *bot, struct discord_message *message) {
     }
 
     // generates the image and adds it to the message
-    draw_efficiency_graph("tmp_image.png", points, eff_array_size, "Count Efficiency", "minutes", "msgs / sec");
+    draw_efficiency_graph("tmp_image.png", points, (eff_n > eff_array_size) ? eff_array_size : eff_n, "Count Efficiency", "minutes", "msgs / sec");
     struct discord_attachment attachment = {
         .filename = "tmp_image.png",
     };
