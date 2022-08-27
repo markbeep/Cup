@@ -83,13 +83,9 @@ static void draw_grid_axis(cairo_surface_t *surface, graph_scale_t gs) {
 
 static void graph_coords(graph_scale_t gs, double x, double y, double *x_src, double *y_src) {
     double x_abs = gs.x_max - gs.x_min;
-    if (x_abs < 0)
-        x_abs *= -1;
     double y_abs = gs.y_max - gs.y_min;
-    if (y_abs < 0)
-        y_abs *= -1;
-    *x_src = x * (gs.w - 2 * gs.margin) / (x_abs) + gs.margin;
-    *y_src = gs.h - y * (gs.h - 2 * gs.margin) / (y_abs)-gs.margin;
+    *x_src = x * (gs.w - 2 * gs.margin) / (x_abs - 1) + gs.margin;
+    *y_src = gs.h - y * (gs.h - 2 * gs.margin) / y_abs - gs.margin;
 }
 
 static void draw_point(cairo_t *cr, double x, double y) {
@@ -145,7 +141,8 @@ void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *
         .y_min = 0.0,
         .margin = 60,
         .display_as_int = true,
-        .x_ticks = 10,
+        .x_ticks = (n > 10) ? 10 : (n == 1) ? 1
+                                            : n - 1,
         .y_ticks = 10,
         .x_offset = -(double)n,
         .y_offset = 0,
@@ -187,7 +184,7 @@ int main_c(void) {
     for (int i = 0; i < 10; i++) {
         points[i][1] = b[i];
     }
-    draw_efficiency_graph("test.png", points, 10, "Count Efficiency", "minutes", "msgs / sec");
+    draw_efficiency_graph("test.png", points, 20, "Count Efficiency", "minutes", "msgs / sec");
 
     for (int i = 0; i < size; i++)
         free(points[i]);
