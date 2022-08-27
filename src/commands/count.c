@@ -10,8 +10,8 @@ static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
 static int counts_sent = 0, counts_sent_prev = 0;  // how many count messages were sent
 static double background_task_loop_seconds = 60.0; // repeat the background task every X seconds
 static bool background_task_started = false;       // prevents multiple background tasks from starting
-double eff_points[100];                            // efficiency over time
-const size_t eff_array_size = 100;                 // size of the efficiency array
+double eff_points[1000];                           // efficiency over time
+const size_t eff_array_size = 1000;                // size of the efficiency array
 size_t eff_n = 0;                                  // total eff added
 
 // COMMANDS
