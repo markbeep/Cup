@@ -110,15 +110,16 @@ void draw_efficiency_graph(char *fp, double **points, size_t n) {
         .y_min = 0.0,
         .margin = 20,
         .display_as_int = true,
-        .x_ticks = 30,
-        .y_ticks = 20,
+        .x_ticks = 15,
+        .y_ticks = 10,
     };
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, gs.w, gs.h);
     cairo_t *cr = cairo_create(surface);
 
     // background
+    float bg_rgb[3] = {48, 52, 63};
     cairo_rectangle(cr, 0, 0, gs.w, gs.h);
-    cairo_set_source_rgba(cr, 0, 0, 0, 1);
+    cairo_set_source_rgba(cr, bg_rgb[0] / 255, bg_rgb[1] / 255, bg_rgb[2] / 255, 1);
     cairo_fill(cr);
 
     // axis
@@ -131,7 +132,7 @@ void draw_efficiency_graph(char *fp, double **points, size_t n) {
     cairo_surface_write_to_png(surface, fp);
 }
 
-int main_graph(void) {
+int main_c(void) {
     draw_efficiency_graph("test.png", NULL, 0);
     return 0;
 }
