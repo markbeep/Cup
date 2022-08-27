@@ -108,14 +108,16 @@ static void cmd_count(bot_client_t *bot, struct discord_message *message) {
 
     // reorders the points so that they are ordered oldest to newest
     double **points = malloc(sizeof(double) * eff_array_size);
+    size_t head = (eff_n > eff_array_size) ? (eff_n - 1) % eff_array_size : 0;
     for (size_t i = 0; i < eff_array_size; i++) {
         points[i] = malloc(sizeof(double) * 2);
         points[i][0] = i;
-        points[i][1] = eff_points[(i + eff_n) % eff_array_size];
+        size_t index = (head + i) % eff_array_size;
+        points[i][1] = eff_points[index];
     }
 
     // generates the image and adds it to the message
-    draw_efficiency_graph("tmp_image.png", points, (eff_n > eff_array_size) ? eff_array_size : eff_n, "Count Efficiency", "minutes", "msgs / sec");
+    draw_efficiency_graph("tmp_image.png", points, (int)((eff_n > eff_array_size) ? eff_array_size : eff_n), "Count Efficiency", "minutes", "msgs / sec");
     struct discord_attachment attachment = {
         .filename = "tmp_image.png",
     };
@@ -251,8 +253,8 @@ static void background_task(void *w, CURL *handle) {
 
     // add to efficiency array
     double eff = counts_sent_prev / background_task_loop_seconds;
-    eff_n++;
     eff_points[eff_n % eff_array_size] = eff;
+    eff_n++;
 
     // to start the timer for when the background task should be repeated
     static struct timeval future_timer;

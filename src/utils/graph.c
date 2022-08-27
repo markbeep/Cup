@@ -102,12 +102,12 @@ static void draw_point(cairo_t *cr, double x, double y) {
     cairo_stroke(cr);
 }
 
-static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double **points, size_t n) {
+static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double **points, int n) {
     if (n == 0)
         return;
     // order points by x using bubble sort
-    for (size_t i = 0; i < n; i++) {
-        for (size_t j = i; j < n - 1; j++) {
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n - 1; j++) {
             if (points[j][0] > points[j + 1][0]) {
                 double tmp_x = points[j][0];
                 double tmp_y = points[j][1];
@@ -124,7 +124,7 @@ static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double *
     float rgb[3] = {242, 243, 174};
     cairo_set_source_rgba(cr_2, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1);
     double x, y;
-    for (size_t i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         graph_coords(gs, points[i][0], points[i][1], &x, &y);
         draw_point(cr, x, y);
         if (i == 0)
@@ -135,7 +135,7 @@ static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double *
     cairo_stroke(cr_2);
 }
 
-void draw_efficiency_graph(char *fp, double **points, size_t n, char *title, char *x_label, char *y_label) {
+void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *x_label, char *y_label) {
     graph_scale_t gs = {
         .w = 1000,
         .h = 500,
@@ -176,17 +176,20 @@ void draw_efficiency_graph(char *fp, double **points, size_t n, char *title, cha
 }
 
 int main_c(void) {
-    size_t size = 15;
-    double **points = malloc(sizeof(double) * size);
+    int size = 20;
+    double **points = calloc(1, sizeof(double) * size);
 
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         points[i] = malloc(sizeof(double) * 2);
         points[i][0] = i;
-        points[i][1] = ((i * i * i) % 100) / 10.;
     }
-    draw_efficiency_graph("test.png", points, size, "Count Efficiency", "minutes", "msgs / sec");
+    double b[10] = {3.1, 3.5, 3.6, 5.2, 3.35, 3.4, 4, 3.2, 3.3, 3.4};
+    for (int i = 0; i < 10; i++) {
+        points[i][1] = b[i];
+    }
+    draw_efficiency_graph("test.png", points, 10, "Count Efficiency", "minutes", "msgs / sec");
 
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
         free(points[i]);
     free(points);
     return 0;
