@@ -11,7 +11,7 @@ static void
 cmd_ping(bot_client_t *bot, struct discord_message *message);
 static void pong_callback(bot_client_t *bot, struct discord_message *msg, void *data);
 void store_ping_callback(bot_client_t *bot, struct discord_message *msg, void *w);
-extern float get_time_passed(struct timeval timer); // defined in count.c
+static float get_time_passed(struct timeval timer); // defined in count.c
 
 void ping_on_message(bot_client_t *bot, struct discord_message *msg) {
     if (!msg->user || msg->user->bot || !msg->content)
@@ -107,4 +107,16 @@ void store_ping_callback(bot_client_t *bot, struct discord_message *msg, void *w
 
     free(w);
     discord_destroy_message(msg);
+}
+
+/**
+ * @brief Returns the amount of ms passed since the timer.
+ *
+ * @param timer
+ * @return float
+ */
+float get_time_passed(struct timeval timer) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return (now.tv_sec - timer.tv_sec) * 1000.0f + (now.tv_usec - timer.tv_usec) / 1000.0f;
 }

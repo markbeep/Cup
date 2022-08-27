@@ -68,7 +68,7 @@ static void draw_point(cairo_t *cr, double x, double y) {
     cairo_stroke(cr);
 }
 
-static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double points[][2], size_t n) {
+static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double **points, size_t n) {
     if (n == 0)
         return;
     // order points by x using bubble sort
@@ -100,10 +100,10 @@ static void draw_line_graph(cairo_surface_t *surface, graph_scale_t gs, double p
     cairo_stroke(cr_2);
 }
 
-void draw_efficiency_graph(char *fp, double points[][2], size_t n) {
+void draw_efficiency_graph(char *fp, double **points, size_t n) {
     graph_scale_t gs = {
-        .w = 1000,
-        .h = 500,
+        .w = 500,
+        .h = 250,
         .x_max = 100.0,
         .x_min = 0.0,
         .y_max = 10.0,
