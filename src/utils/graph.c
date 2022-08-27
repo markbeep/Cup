@@ -19,6 +19,7 @@ typedef struct {
 } graph_scale_t;
 
 static void draw_text_centered(cairo_surface_t *surface, graph_scale_t gs, double x, double y, char *text, double font_size, double rotation) {
+    (void)gs;
     cairo_t *cr = cairo_create(surface);
     cairo_text_extents_t extends = {0};
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
@@ -178,14 +179,14 @@ int main_c(void) {
     size_t size = 15;
     double **points = malloc(sizeof(double) * size);
 
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         points[i] = malloc(sizeof(double) * 2);
         points[i][0] = i;
         points[i][1] = ((i * i * i) % 100) / 10.;
     }
     draw_efficiency_graph("test.png", points, size, "Count Efficiency", "minutes", "msgs / sec");
 
-    for (int i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
         free(points[i]);
     free(points);
     return 0;
