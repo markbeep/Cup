@@ -1,6 +1,3 @@
-#ifndef CUP_COUNT
-#define CUP_COUNT
-
 #include "../commands.h"
 #include <sys/time.h>
 
@@ -12,6 +9,9 @@ static uint64_t count_channel_id = 996746797236105236UL; // channel to count in
 // used to count the efficiency of the counting channel
 static struct timeval timer_short, timer_long; // short should be <1 min while long can be >1 min
 static int counts_sent_short = 0, counts_sent_long = 0;
+double eff_points[100]; // efficiency over time
+size_t eff_n = 0;       // total eff added
+size_t eff_head = 0;    // current place of the last added value (allows for loop around)
 
 // COMMANDS
 static void cmd_watch(bot_client_t *bot, struct discord_message *message);
@@ -25,6 +25,8 @@ static uint64_t get_watch_id(void);
 static void set_watch_id(uint64_t id);
 static void send_count(bot_client_t *bot, int n);
 static void get_last_message_count(bot_client_t *bot);
+static double compute_efficiency(double s_pass);
+extern void draw_efficiency_graph(char *fp, double points[][2], size_t n);
 
 void count_on_ready(bot_client_t *bot) {
     // checks what the last count is and sends the next count if needed
@@ -39,6 +41,18 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
     // no content or no member (so not a guild message)
     if (!message->content || !message->member || !message->user)
         return;
+    // update efficiency if short timer is above 60s
+    if (get_time_passed(timer_short) > 45000.0f) {
+        timer_long = timer_short;
+        counts_sent_long = counts_sent_short;
+        counts_sent_short = 0;
+        gettimeofday(&timer_short, NULL);
+
+        // add to efficiency array
+        double s_pass = get_time_passed(timer_long) / 1000;
+        eff_points[eff_head++] = compute_efficiency(s_pass);
+        eff_n++;
+    }
 
     // commands to call (bots are ignored)
     if (!message->user->bot) {
@@ -67,14 +81,6 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
         count = n;
         send_count(bot, n + 1);
     }
-
-    // update efficiency if short timer is above 60s
-    if (get_time_passed(timer_short) > 45000.0f) {
-        timer_long = timer_short;
-        counts_sent_long = counts_sent_short;
-        counts_sent_short = 0;
-        gettimeofday(&timer_short, NULL);
-    }
 }
 
 /* #####################################
@@ -96,11 +102,8 @@ float get_time_passed(struct timeval timer) {
 }
 
 static void cmd_count(bot_client_t *bot, struct discord_message *message) {
-    // calculate the efficiency
-    float s_pass = get_time_passed(timer_long) / 1000;
-    if (s_pass <= 0.f)
-        s_pass = 0.0001;
-    float eff = counts_sent_long / s_pass;
+    double s_pass = get_time_passed(timer_long) / 1000;
+    float eff = compute_efficiency(s_pass);
 
     char s1[20];
     sprintf(s1, "`%d`", count);
@@ -123,6 +126,14 @@ static void cmd_count(bot_client_t *bot, struct discord_message *message) {
         .fields_count = 2,
     };
     struct discord_create_message msg = {.embed = &embed};
+
+    double points[100][2];
+    for (int i = 0; i < 100; i++) {
+        points[i][0] = i;
+        points[i][1] = eff_points[(i + eff_head) % 100];
+    }
+    draw_efficiency_graph("test.png", points, 100);
+
     discord_channel_send_message(bot, NULL, message->channel_id, &msg, false);
 }
 
@@ -232,4 +243,8 @@ static void get_last_message_count(bot_client_t *bot) {
     discord_get_messages(bot, count_channel_id, 1, 0, 0, 0, cb);
 }
 
-#endif
+static double compute_efficiency(double s_pass) {
+    if (s_pass <= 0.f)
+        s_pass = 0.0001;
+    return counts_sent_long / s_pass;
+}

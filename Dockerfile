@@ -4,7 +4,9 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y && \
-    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb -y
+    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb wget -y
+
+RUN apt-get install libcairo2-dev -y
 
 # build Disco-C
 COPY external/Disco-C/external external/Disco-C/external
