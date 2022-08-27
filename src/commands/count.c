@@ -27,7 +27,7 @@ static void send_count(bot_client_t *bot, int n);
 static void get_last_message_count(bot_client_t *bot);
 static void background_task(void *w, CURL *handle);
 // EXTERN HELPERS
-extern void draw_efficiency_graph(char *fp, double **points, size_t n);
+void draw_efficiency_graph(char *fp, double **points, size_t n, char *title, char *x_label, char *y_label);
 
 void count_on_ready(bot_client_t *bot) {
     // checks what the last count is and sends the next count if needed
@@ -115,9 +115,9 @@ static void cmd_count(bot_client_t *bot, struct discord_message *message) {
     }
 
     // generates the image and adds it to the message
-    draw_efficiency_graph("test.png", points, eff_array_size);
+    draw_efficiency_graph("tmp_image.png", points, eff_array_size, "Count Efficiency", "minutes", "msgs / sec");
     struct discord_attachment attachment = {
-        .filename = "test.png",
+        .filename = "tmp_image.png",
     };
     struct discord_attachment *attachments[] = {&attachment};
     struct discord_create_message msg = {
