@@ -84,14 +84,14 @@ static void draw_grid_axis(cairo_surface_t *surface, graph_scale_t gs) {
 static void graph_coords(graph_scale_t gs, double x, double y, double *x_src, double *y_src) {
     double x_abs = gs.x_max - gs.x_min;
     double y_abs = gs.y_max - gs.y_min;
-    *x_src = x * (gs.w - 2 * gs.margin) / (x_abs - 1) + gs.margin;
+    *x_src = x * (gs.w - 2 * gs.margin) / x_abs + gs.margin;
     *y_src = gs.h - y * (gs.h - 2 * gs.margin) / y_abs - gs.margin;
 }
 
 static void draw_point(cairo_t *cr, double x, double y) {
     float rgb[3] = {255, 255, 255};
     cairo_set_source_rgba(cr, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1);
-    cairo_set_line_width(cr, 5);
+    cairo_set_line_width(cr, 3);
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_move_to(cr, x, y);
     cairo_line_to(cr, x, y);
@@ -135,18 +135,33 @@ void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *
     graph_scale_t gs = {
         .w = 1000,
         .h = 500,
-        .x_max = (double)n,
-        .x_min = 0.0,
-        .y_max = 10.0,
-        .y_min = 0.0,
+        .x_max = -__INT_MAX__,
+        .x_min = __INT_MAX__,
+        .y_max = -__INT_MAX__,
+        .y_min = __INT_MAX__,
         .margin = 60,
         .display_as_int = true,
-        .x_ticks = (n > 10) ? 10 : (n == 1) ? 1
+        .x_ticks = (n > 10) ? 10 : (n == 1) ? 1 // n ticks if less than 10 values, else 10 ticks
                                             : n - 1,
         .y_ticks = 10,
         .x_offset = -(double)n,
         .y_offset = 0,
     };
+    // finds the min and max x/y values
+    for (int i = 0; i < n; i++) {
+        if (points[i][0] > gs.x_max)
+            gs.x_max = points[i][0];
+        if (points[i][0] < gs.x_min)
+            gs.x_min = points[i][0];
+        if (points[i][1] > gs.y_max)
+            gs.y_max = points[i][1];
+        if (points[i][1] < gs.y_min)
+            gs.y_min = points[i][1];
+    }
+    gs.y_min = 0;
+    gs.y_max++;
+    gs.y_ticks = gs.y_max;
+
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, gs.w, gs.h);
     cairo_t *cr = cairo_create(surface);
 
@@ -173,7 +188,7 @@ void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *
 }
 
 int main_c(void) {
-    int size = 20;
+    int size = 1000;
     double **points = calloc(1, sizeof(double) * size);
 
     for (int i = 0; i < size; i++) {
@@ -184,7 +199,7 @@ int main_c(void) {
     for (int i = 0; i < 10; i++) {
         points[i][1] = b[i];
     }
-    draw_efficiency_graph("test.png", points, 20, "Count Efficiency", "minutes", "msgs / sec");
+    draw_efficiency_graph("test.png", points, size, "Count Efficiency", "minutes", "msgs / sec");
 
     for (int i = 0; i < size; i++)
         free(points[i]);
