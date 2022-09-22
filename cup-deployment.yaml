@@ -22,3 +22,13 @@ spec:
               valueFrom:
                 name: cup-secret
                 key: cup-discord-token
+          volumeMounts:
+            - mountPath: /app/data
+              name: cup-data
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+      volumes:
+        - name: cup-data
+          emptyDir: {}
