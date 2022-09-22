@@ -1,3 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: cup-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: cup-local-storage
+  resources:
+    requests:
+      storage: 10Ki
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +28,7 @@ spec:
     spec:
       containers:
         - name: cup
-          image: markbeep/cup
+          image: markbeep/cup:latest
           env:
             - name: DISCORD_TOKEN
               valueFrom:
@@ -32,4 +44,5 @@ spec:
               cpu: "100m"
       volumes:
         - name: cup-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: cup-claim
