@@ -20,8 +20,9 @@ spec:
           env:
             - name: DISCORD_TOKEN
               valueFrom:
-                name: cup-secret
-                key: cup-discord-token
+                secretKeyRef:
+                  name: cup-secret
+                  key: cup-discord-token
           volumeMounts:
             - mountPath: /app/data
               name: cup-data
