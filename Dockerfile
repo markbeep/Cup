@@ -1,18 +1,18 @@
-FROM ubuntu:20.04
+FROM alpine:3.16.2
 
 WORKDIR /app
 
-# fixes the tzdata configuration
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && \
-    apt-get install -y && \
-    apt-get install make gcc libcurl4-gnutls-dev libwebsockets-dev gdb wget libcairo2-dev -y
+RUN apk add --no-cache make gcc musl-dev curl-dev libwebsockets-dev gdb cairo-dev
+
+# downloads <sys/queue.h>
+RUN wget https://raw.githubusercontent.com/openembedded/openembedded-core/master/meta/recipes-core/musl/bsd-headers/sys-queue.h -O queue.h &&\
+    mv queue.h /usr/include/sys/queue.h
 
 # build Disco-C
+COPY external/Disco-C/src external/Disco-C/src
+COPY external/Disco-C/include external/Disco-C/include
 COPY external/Disco-C/external external/Disco-C/external
 COPY external/Disco-C/Makefile external/Disco-C/Makefile
-COPY external/Disco-C/include external/Disco-C/include
-COPY external/Disco-C/src external/Disco-C/src
 RUN (cd external/Disco-C && make clean && make dev)
 
 # build bot

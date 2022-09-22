@@ -1,0 +1,10 @@
+services:
+  asvz-tracker:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - data:/data
+    environment:
+      - DISCORD_TOKEN=placeholder
+volumes:
+  data:
