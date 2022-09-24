@@ -24,4 +24,4 @@ RUN rm -f main && make
 ENV SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
 EXPOSE 443
 
-CMD gdb -ex "set print thread-events off" -ex run -ex bt -q main
+CMD exec gdb -ex "set print thread-events off" -ex run -ex bt -q main
