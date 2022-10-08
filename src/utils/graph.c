@@ -1,4 +1,5 @@
 #include <cairo/cairo.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,7 +160,7 @@ void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *
             gs.y_min = points[i][1];
     }
     gs.y_min = 0;
-    gs.y_max++;
+    gs.y_max = (int)gs.y_max + 1;
     gs.y_ticks = gs.y_max;
 
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, gs.w, gs.h);
@@ -188,14 +189,14 @@ void draw_efficiency_graph(char *fp, double **points, int n, char *title, char *
 }
 
 int main_c(void) {
-    int size = 1000;
+    int size = 10;
     double **points = calloc(1, sizeof(double) * size);
 
     for (int i = 0; i < size; i++) {
         points[i] = malloc(sizeof(double) * 2);
         points[i][0] = i;
     }
-    double b[10] = {3.1, 3.5, 3.6, 5.2, 3.35, 3.4, 4, 3.2, 3.3, 3.4};
+    double b[10] = {3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5};
     for (int i = 0; i < 10; i++) {
         points[i][1] = b[i];
     }
