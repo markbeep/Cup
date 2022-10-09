@@ -2,7 +2,6 @@
  * @file main.c
  * @author markbeep
  * @brief Example file that receives a number and one ups it in the specified channel.
- * @version 0.10
  * @date 2022-07-24
  *
  * @copyright Copyright (c) 2022
