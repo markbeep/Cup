@@ -70,6 +70,8 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
     if (message->user->id != owner_id && message->user->id != bot_to_watch)
         return;
     int n = (int)strtol(message->content, NULL, 10);
+    if (n >= 100000000)
+        return;  // stop sending counts after 100 mil
     if (n >= count) { // ignore any number below our count
         count = n;
         send_count(bot, n + 1);
@@ -84,26 +86,37 @@ void count_on_message(bot_client_t *bot, struct discord_message *message) {
 
 static void cmd_count(bot_client_t *bot, struct discord_message *message) {
     float eff = 1.0 * counts_sent_prev / background_task_loop_seconds;
+    float seconds_until_100m = 0;
+    // seconds until 100mil is reached
+    if (eff > 0)
+        seconds_until_100m = (1e8 - count) / eff;
 
     char s1[20];
-    sprintf(s1, "`%d`", count);
+    snprintf(s1, sizeof(s1), "`%d`", count);
     struct discord_embed_field f1 = {
         .name = "Count",
         .value = s1,
         ._inline = true,
     };
     char s2[50];
-    sprintf(s2, "`%.2f` msgs/sec (%.0fs)", eff, background_task_loop_seconds);
+    snprintf(s2, sizeof(s2), "`%.2f` msgs/sec (%.0fs)", eff, background_task_loop_seconds);
     struct discord_embed_field f2 = {
         .name = "Efficiency",
         .value = s2,
         ._inline = true,
     };
-    struct discord_embed_field *fs1[] = {&f1, &f2};
+    char s3[50];
+    snprintf(s3, sizeof(s3), "`%.2f` mins", seconds_until_100m / 60);
+    struct discord_embed_field f3 = {
+        .name = "Time until 100m",
+        .value = s3,
+        ._inline = true,
+    };
+    struct discord_embed_field *fs1[] = {&f1, &f2, &f3};
     struct discord_embed embed = {
         .color = 0xadd8e6,
         .fields = fs1,
-        .fields_count = 2,
+        .fields_count = 3,
     };
 
     // reorders the points so that they are ordered oldest to newest
@@ -174,6 +187,8 @@ static void last_message_cb(bot_client_t *bot, size_t size, struct discord_messa
         free(arr);
     }
     count = res;
+    if (count >= 100000000)
+        return;  // stop after 100 mil
     if (count >= 0)
         send_count(bot, count + 1);
 }
@@ -228,6 +243,13 @@ static void send_count(bot_client_t *bot, int n) {
     gettimeofday(start, NULL);
     cb->data = start;
     discord_channel_send_message(bot, s, count_channel_id, NULL, cb);
+
+    if (n == 100000000) {
+        char s1[60];
+        snprintf(s1, sizeof(s1), "100 MILLION REACHED!!! <@205704051856244736>");
+        uint64_t chid = 768600365602963496L;
+        discord_channel_send_message(bot, s1, chid, NULL, NULL);
+    }
 }
 
 /**

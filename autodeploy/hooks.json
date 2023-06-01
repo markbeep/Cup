@@ -1,7 +1,0 @@
-[
-    {
-        "id": "redeploy-webhook",
-        "execute-command": "autodeploy/redeploy.sh",
-        "command-working-directory": "."
-    }
-]
